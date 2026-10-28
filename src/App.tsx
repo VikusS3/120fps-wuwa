@@ -96,7 +96,7 @@ export const App: React.FC = () => {
             <span>KURO GAMES • PC WHITELIST CHECKER</span>
           </div>
           <h1 className="text-3xl sm:text-5xl font-display font-black tracking-tight text-white uppercase">
-            ¿TU PC CORRE <span className="bg-gradient-to-r from-cyan-400 via-sky-400 to-blue-500 bg-clip-text text-transparent">120 FPS</span>?
+            ¿TU PC CORRE <span className="bg-gradient-to-r from-cyan-400 via-sky-400 to-blue-500 bg-clip-text text-transparent">120 FPS</span> EN WUWA?
           </h1>
           <p className="text-sm font-gamer font-semibold text-slate-400 max-w-md mx-auto">
             Diagnóstico instantáneo de GPU y CPU para desbloquear la opción oficial de 120 cuadros en Wuthering Waves.

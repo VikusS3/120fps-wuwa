@@ -2,14 +2,104 @@
 <html lang="es" class="dark">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300f2fe' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polygon points='13 2 3 14 12 14 11 22 21 10 12 10 13 2'></polygon></svg>" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>WuWa 120 FPS - Hardware Checker</title>
-    <meta name="description" content="Comprueba si tu PC o Laptop cumple los requisitos oficiales de Kuro Games para la opción de 120 FPS en Wuthering Waves." />
+    
+    <!-- Metadatos Primarios de SEO -->
+    <title>Wuthering Waves 120 FPS Checker | ¿Tu PC Cumple los Requisitos?</title>
+    <meta name="title" content="Wuthering Waves 120 FPS Checker | ¿Tu PC Cumple los Requisitos?" />
+    <meta name="description" content="Comprueba gratis y al instante si tu tarjeta gráfica y procesador cumplen con el whitelist oficial de Kuro Games para activar los 120 FPS en Wuthering Waves." />
+    <meta name="keywords" content="wuthering waves 120 fps, wuwa 120 fps hardware checker, requisitos 120 fps wuthering waves, pc compatibility wuwa, kuro games 120 fps whitelist, rtx 4060 120 fps wuwa, can i run wuthering waves 120 fps" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="author" content="WuWa Hardware Community" />
+    <meta name="theme-color" content="#030508" />
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://wuwa-120fps-checker.vercel.app/" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300f2fe' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polygon points='13 2 3 14 12 14 11 22 21 10 12 10 13 2'></polygon></svg>" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://wuwa-120fps-checker.vercel.app/" />
+    <meta property="og:site_name" content="WuWa 120 FPS Hardware Checker" />
+    <meta property="og:title" content="Wuthering Waves 120 FPS Checker | ¿Tu PC Cumple los Requisitos?" />
+    <meta property="og:description" content="Comprueba gratis y al instante si tu tarjeta gráfica y procesador cumplen con el whitelist oficial de Kuro Games para activar los 120 FPS en Wuthering Waves." />
+    <meta property="og:image" content="https://wuwa-120fps-checker.vercel.app/og-image.webp" />
+    <meta property="og:image:secure_url" content="https://wuwa-120fps-checker.vercel.app/og-image.webp" />
+    <meta property="og:image:type" content="image/webp" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Wuthering Waves 120 FPS Hardware Checker Preview" />
+    <meta property="og:locale" content="es_ES" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://wuwa-120fps-checker.vercel.app/" />
+    <meta name="twitter:title" content="Wuthering Waves 120 FPS Checker | ¿Tu PC Cumple los Requisitos?" />
+    <meta name="twitter:description" content="Comprueba si tu GPU y CPU pueden desbloquear la opción nativa de 120 FPS en Wuthering Waves según Kuro Games." />
+    <meta name="twitter:image" content="https://wuwa-120fps-checker.vercel.app/og-image.webp" />
+    <meta name="twitter:image:alt" content="Wuthering Waves 120 FPS Hardware Checker" />
+
     <!-- Google Fonts: Orbitron & Rajdhani (Estilo Gamer / Cyber) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Datos Estructurados (JSON-LD): WebApplication & FAQPage -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebApplication",
+          "@id": "https://wuwa-120fps-checker.vercel.app/#webapp",
+          "name": "Wuthering Waves 120 FPS Hardware Checker",
+          "url": "https://wuwa-120fps-checker.vercel.app/",
+          "description": "Herramienta de diagnóstico de hardware en navegador para verificar la compatibilidad de la opción de 120 FPS en Wuthering Waves según los requisitos oficiales de Kuro Games.",
+          "applicationCategory": "UtilityApplication, GameApplication",
+          "operatingSystem": "Windows 10, Windows 11",
+          "inLanguage": "es",
+          "image": "https://wuwa-120fps-checker.vercel.app/og-image.webp",
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+          }
+        },
+        {
+          "@type": "FAQPage",
+          "@id": "https://wuwa-120fps-checker.vercel.app/#faq",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "¿Por qué no me aparece la opción de 120 FPS en Wuthering Waves?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Kuro Games implementó un whitelist o lista blanca estricta de hardware en PC. Si tu GPU o CPU no coinciden con los modelos oficialmente aprobados (por ejemplo, mínimo RTX 3060 / RX 6700 XT y CPU moderna), el selector de 120 FPS permanecerá oculto en el menú de gráficos."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "¿Qué tarjetas gráficas soportan 120 FPS en Wuthering Waves?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Oficialmente se admiten las tarjetas NVIDIA GeForce RTX Serie 30 (a partir de RTX 3060), RTX Serie 40 (a partir de RTX 4050 Laptop), AMD Radeon RX Serie 6000 (a partir de RX 6700 XT) y AMD Radeon RX Serie 7000 (a partir de RX 7600)."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "¿Cumplir con los requisitos garantiza 120 FPS estables?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "No. Cumplir los requisitos desbloquea la opción dentro del juego, pero mantener 120 FPS constantes dependerá de tu resolución (1080p, 1440p o 4K), uso de escalado DLSS/FSR, temperaturas y configuración gráfica."
+              }
+            }
+          ]
+        }
+      ]
+    }
+    </script>
   </head>
   <body class="bg-[#030508] text-slate-100 min-h-screen selection:bg-cyan-500/30 selection:text-cyan-200 antialiased font-gamer">
     <div id="root"></div>
