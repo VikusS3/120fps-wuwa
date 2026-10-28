@@ -50,4 +50,6 @@ export interface DeviceHardwareProfile {
   screen: DetectedScreenInfo;
   webGlAvailable: boolean;
   webGpuAvailable: boolean;
+  isBrave?: boolean;
+  isShieldsBlocking?: boolean;
 }

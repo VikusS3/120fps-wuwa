@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Header } from './components/Header';
 import { VerdictBanner } from './components/VerdictBanner';
+import { BraveShieldsBanner } from './components/BraveShieldsBanner';
 import { FaqSection } from './components/FaqSection';
 import { ManualEditModal } from './components/ManualEditModal';
 import { SourcesSection } from './components/SourcesSection';
@@ -103,6 +104,11 @@ export const App: React.FC = () => {
             Diagnóstico instantáneo de GPU y CPU para desbloquear la opción oficial de 120 cuadros en Wuthering Waves.
           </p>
         </div>
+
+        {/* Aviso no invasivo si Brave Shields bloquea la GPU */}
+        {profile?.isShieldsBlocking && !hardwareInput.gpuModel && (
+          <BraveShieldsBanner onOpenGpuModal={() => setIsEditModalOpen(true)} />
+        )}
 
         {/* HUD Gamer Central Console */}
         {evaluation && (

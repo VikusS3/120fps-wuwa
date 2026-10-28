@@ -143,3 +143,15 @@ export function detectCpu(): DetectedCpuInfo {
     }
   };
 }
+
+export async function detectBrave(): Promise<{ isBrave: boolean }> {
+  try {
+    if (typeof navigator !== 'undefined' && (navigator as any).brave?.isBrave) {
+      const isBrave = await (navigator as any).brave.isBrave();
+      return { isBrave: !!isBrave };
+    }
+  } catch (e) {
+    // Error al consultar la API de Brave
+  }
+  return { isBrave: false };
+}
