@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-[#030508] text-slate-100 antialiased font-sans selection:bg-cyan-500/30 selection:text-cyan-200;
+    background-image: 
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(6, 182, 212, 0.15), transparent 70%),
+      radial-gradient(circle at 100% 100%, rgba(14, 165, 233, 0.08), transparent 50%),
+      radial-gradient(circle at 0% 50%, rgba(2, 132, 199, 0.05), transparent 50%);
+    background-attachment: fixed;
+    background-color: #030508;
+  }
+}
+
+/* Scrollbar estilizado en cian/negro */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #030508;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #111723;
+  border-radius: 3px;
+  border: 1px solid rgba(6, 182, 212, 0.15);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #0ea5e9;
+}
