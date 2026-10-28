@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Header } from './components/Header';
 import { VerdictBanner } from './components/VerdictBanner';
+import { FaqSection } from './components/FaqSection';
 import { ManualEditModal } from './components/ManualEditModal';
 import { SourcesSection } from './components/SourcesSection';
 import { runFullHardwareInspection } from './lib/detection';
@@ -111,6 +112,9 @@ export const App: React.FC = () => {
             onOpenEditModal={() => setIsEditModalOpen(true)}
           />
         )}
+
+        {/* Sección Visible de FAQ para Concordancia con Schema JSON-LD */}
+        <FaqSection />
 
         {/* Desplegable discreto de fuentes oficiales */}
         <div className="pt-2">
