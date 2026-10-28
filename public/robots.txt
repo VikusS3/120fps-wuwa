@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://wuwa-120fps-checker.vercel.app/sitemap.xml
+Sitemap: https://120fps-wuwa.vercel.app/sitemap.xml
