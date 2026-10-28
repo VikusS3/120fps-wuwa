@@ -110,6 +110,26 @@ pnpm approve-builds --all
 
 ---
 
+## ☁️ Despliegue en Vercel
+
+El proyecto incluye la configuración nativa en `vercel.json` y `package.json`:
+
+### Opción A: Vercel Dashboard (Con GitHub)
+1. Sube este repositorio a GitHub.
+2. Ve a [Vercel](https://vercel.com) e importa el repositorio.
+3. Vercel detectará automáticamente Vite y `pnpm`. Pulsa **Deploy**.
+
+### Opción B: Vercel CLI
+```bash
+# 1. Instalar Vercel CLI (si no lo tienes)
+pnpm add -g vercel
+
+# 2. Desplegar
+vercel
+```
+
+---
+
 ## 🧪 Pruebas Unitarias
 
 La suite incluye 22 pruebas automatizadas que cubren:
