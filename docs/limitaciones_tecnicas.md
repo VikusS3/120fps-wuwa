@@ -14,10 +14,10 @@ Esta aplicación opera **100% en el lado del cliente**, sin servidores intermedi
 - **API disponible:** `navigator.hardwareConcurrency`.
 - **Qué información aporta:** El número de hilos lógicos disponibles en el hilo del navegador (por ejemplo, 8, 16 o 24).
 - **Limitaciones reales:** No revela el fabricante (Intel vs AMD), la microarquitectura, la generación ni el modelo comercial (ej. *i7-13700K* vs *Ryzen 7 7800X3D*). Ninguna API web estándar lo expone por diseño.
-- **Inferencia desde la iGPU (opcional y siempre confirmada):** las gráficas integradas son exclusivas de rangos cerrados de procesadores, lo que permite inferir la *familia* con certeza documentable (p. ej. Radeon 780M → Ryzen 7000/8000/9000; UHD 630 → Intel de 10ª generación o anterior). El módulo `cpuInferencer.ts` distingue dos casos:
+- **Inferencia desde la iGPU (opcional y siempre confirmada):** las gráficas integradas son exclusivas de rangos cerrados de procesadores, lo que permite inferir la *familia* con certeza documentable (p. ej. Radeon 780M → Ryzen 7000/8000/9000; UHD 630 → Intel de 10ª generación o anterior; Intel Arc integrada → Core Ultra). El módulo `cpuInferencer.ts` evalúa **todas las fuentes observadas** —la GPU elegida, el resto de candidatas priorizando las integradas y la segunda GPU— porque en portátiles Optimus la dedicada gana la elección y ocultaría la iGPU que informa de la CPU. Después distingue dos casos:
   - **Decisiva (`decisive: true`):** el rango de generación es cerrado y se pre-rellena el modelo sugerido (`cpuFormFactor: 'all'`, ya que no se puede saber si es portátil o escritorio). El usuario debe confirmarlo mediante el banner *"Sí, es mi procesador"* antes de que cuente como verificado; hasta entonces se muestra como *Inferido / Sin confirmar*.
-  - **No decisiva (`decisive: false`):** el rango es ambiguo (p. ej. Iris Xe abarca 11ª-13ª generación y cruza el umbral de 12ª) y solo se ofrece como guía: el usuario debe elegir su modelo exacto en el formulario.
-- **Comportamiento de la aplicación:** si no hay inferencia posible se clasifica honestamente como `unknown` (desconocido) y se solicita al usuario que seleccione su modelo en el formulario manual. **Nunca se simula una lectura mágica ni se inventa el procesador; toda inferencia es visible, etiquetada y requiere confirmación.**
+  - **No decisiva (`decisive: false`):** el rango es ambiguo (p. ej. Iris Xe abarca 11ª-13ª generación y cruza el umbral de 12ª; Radeon 740M existe en versiones U y G con distinto estatus) y solo se ofrece como guía: el usuario debe elegir su modelo exacto en el formulario.
+- **Comportamiento de la aplicación:** si ninguna fuente permite inferir la CPU (p. ej. escritorio con tarjeta dedicada sin iGPU expuesta) se muestra un banner que explica el motivo y ofrece abrir el selector manual. **Nunca se simula una lectura mágica ni se inventa el procesador; toda inferencia es visible, etiquetada y requiere confirmación.**
 
 ### 2.2. Tarjeta Gráfica (GPU)
 - **APIs disponibles:**
@@ -33,8 +33,8 @@ Esta aplicación opera **100% en el lado del cliente**, sin servidores intermedi
 
 ### 2.3. Memoria RAM
 - **API disponible:** `navigator.deviceMemory`.
-- **Limitaciones reales:** Por especificación del W3C para mitigar ataques de temporización y rastreo entre sitios, el valor devuelto se redondea a potencias de dos y **está limitado artificialmente a un máximo de 8 GB** (valores: 0.25, 0.5, 1, 2, 4 u 8).
-- **Comportamiento de la aplicación:** Se informa al usuario de que el valor detectado puede ser inferior a la RAM real física (por ejemplo, tener 16 o 32 GB instalados y ver reportado 8 GB) y se clasifica como `Aproximado`.
+- **Limitaciones reales:** Por especificación del W3C para mitigar ataques de temporización y rastreo entre sitios, el valor devuelto se redondea a potencias de dos y **está limitado artificialmente a un máximo de 8 GB** (valores: 0.25, 0.5, 1, 2, 4 u 8). Un equipo con 16 o 32 GB reportará exactamente 8: **la RAM real no es legible desde la web**. En Firefox/Safari la API puede no existir (valor 0).
+- **Comportamiento de la aplicación:** nunca se inventa un número (antes el código convertía a ciegas 8 → 16). Cuando `deviceMemory` está capado (= 8) o no existe (= 0), el valor se conserva tal cual, la ranura muestra *«≥8 GB · Sin confirmar»* y un banner pide al usuario indicar su RAM real (8/16/32/64 GB u otra cantidad). Solo después de esa confirmación se evalúa como definitiva. La RAM no es un requisito obligatorio del veredicto, así que esta duda nunca bloquea el resultado global.
 
 ### 2.4. Pantalla y Tasa de Refresco (Hz)
 - **APIs disponibles:** `screen.width`, `screen.height`, `window.devicePixelRatio`, y muestreo pasivo con `window.requestAnimationFrame`.

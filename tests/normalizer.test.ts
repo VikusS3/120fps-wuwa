@@ -125,6 +125,16 @@ describe('Normalizador y Coincidencia de Hardware', () => {
     expect(matched?.isCompatible120Fps).toBe(true);
   });
 
+  it('debe reconocer la nomenclatura Ryzen AI 300 (Zen 5) como compatible', () => {
+    const ai5 = matchCpuRule('AMD Ryzen AI 5 340');
+    expect(ai5).not.toBeNull();
+    expect(ai5?.isCompatible120Fps).toBe(true);
+
+    const ai9hx = matchCpuRule('AMD Ryzen AI 9 HX 370');
+    expect(ai9hx).not.toBeNull();
+    expect(ai9hx?.isCompatible120Fps).toBe(true);
+  });
+
   // ==========================================
   // inferFormFactor — sin falsos positivos por "13th"
   // ==========================================

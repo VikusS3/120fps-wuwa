@@ -169,8 +169,11 @@ export function matchCpuRule(input: string): CompatibilityRule | null {
       });
     }
 
-    // Modelos Ryzen modernos: serie 7000, 8000, 9000.
-    if (/\b[789]\d{3}[a-z]*\b/i.test(clean)) {
+    // Modelos Ryzen modernos: serie 7000, 8000, 9000 y Ryzen AI 300 (Zen 5).
+    if (
+      /\b[789]\d{3}[a-z]*\b/i.test(clean) ||
+      /\bryzen\s+ai\s+\d+(?:\s+hx)?\s+\d{3}\b/i.test(clean)
+    ) {
       return buildInferredCpuRule(clean, input, {
         id: 'cpu-amd-modern-inferred',
         family: 'AMD Ryzen 7000/8000/9000 Series',

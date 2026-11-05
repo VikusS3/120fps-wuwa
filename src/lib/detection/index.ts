@@ -10,6 +10,7 @@ export * from './gpuDetector';
 export * from './systemDetector';
 export * from './screenDetector';
 export * from './cpuInferencer';
+export * from './prefill';
 
 export async function runFullHardwareInspection(): Promise<DeviceHardwareProfile> {
   const [gpu, os, screen, braveInfo] = await Promise.all([

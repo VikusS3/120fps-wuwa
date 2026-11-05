@@ -6,11 +6,11 @@ import { FaqSection } from './components/FaqSection';
 import { ManualEditModal } from './components/ManualEditModal';
 import { SourcesSection } from './components/SourcesSection';
 import { InspectionStatus } from './components/InspectionStatus';
-import { runFullHardwareInspection } from './lib/detection';
+import { runFullHardwareInspection, buildHardwareInput, isRamUnconfirmed } from './lib/detection';
 import { DeviceHardwareProfile } from './lib/detection/types';
 import { UserHardwareInput, EvaluationResult } from './lib/evaluation/types';
 import { evaluateHardware } from './lib/evaluation/evaluator';
-import { ChevronDown, ChevronUp, BookOpen, ShieldCheck, Cpu, AlertTriangle, RefreshCw } from 'lucide-react';
+import { ChevronDown, ChevronUp, BookOpen, ShieldCheck, Cpu, AlertTriangle, RefreshCw, HardDrive } from 'lucide-react';
 
 const DEFAULT_HARDWARE_INPUT: UserHardwareInput = {
   gpuModel: '',
@@ -30,6 +30,8 @@ export const App: React.FC = () => {
   const [scanError, setScanError] = useState<string | null>(null);
   const [cpuSuggestionVisible, setCpuSuggestionVisible] = useState<boolean>(false);
   const [cpuConfirmed, setCpuConfirmed] = useState<boolean>(false);
+  const [ramSuggestionVisible, setRamSuggestionVisible] = useState<boolean>(false);
+  const [ramConfirmed, setRamConfirmed] = useState<boolean>(false);
 
   // Estado del hardware
   const [hardwareInput, setHardwareInput] = useState<UserHardwareInput>(DEFAULT_HARDWARE_INPUT);
@@ -45,27 +47,19 @@ export const App: React.FC = () => {
       const detected = await runFullHardwareInspection();
       setProfile(detected);
 
-      const isLaptopGpu = detected.gpu.model.value.toLowerCase().includes('laptop') ||
-                          detected.gpu.rendererString.toLowerCase().includes('mobile');
-
-      const inference = detected.cpu.inference;
-      const canPrefillCpu = !!inference?.decisive && !!inference.suggestedModel;
-
-      const initialInput: UserHardwareInput = {
-        gpuModel: detected.gpu.model.value !== 'No detectada' ? detected.gpu.model.value : '',
-        gpuFormFactor: isLaptopGpu ? 'laptop' : 'desktop',
-        // El factor de forma de una CPU inferida desde la iGPU es desconocido.
-        cpuModel: canPrefillCpu ? (inference?.suggestedModel ?? '') : '',
-        cpuFormFactor: canPrefillCpu ? 'all' : (isLaptopGpu ? 'laptop' : 'desktop'),
-        ramGb: detected.ram.estimatedGb.value >= 8 ? 16 : (detected.ram.estimatedGb.value || 8),
-        osName: detected.os.osName.value !== 'Desconocido' ? detected.os.osName.value : 'Windows 10 / 11 (64-bit)',
-        screenRefreshRateHz: detected.screen.estimatedRefreshRate.value || 60
-      };
-
+      const initialInput = buildHardwareInput(detected);
       setHardwareInput(initialInput);
       setEvaluation(evaluateHardware(initialInput));
+
+      const inference = detected.cpu.inference;
       setCpuConfirmed(false);
       setCpuSuggestionVisible(!!inference);
+
+      // RAM: sin adivinanzas. Si deviceMemory está capado o no existe,
+      // se pide confirmación al usuario en lugar de inventar 16 GB.
+      const ramUnconfirmed = isRamUnconfirmed(detected.ram);
+      setRamConfirmed(!ramUnconfirmed);
+      setRamSuggestionVisible(ramUnconfirmed);
     } catch (err) {
       console.error('Error durante la detección de hardware:', err);
       setProfile(null);
@@ -74,6 +68,8 @@ export const App: React.FC = () => {
       // el usuario pueda introducir sus componentes manualmente.
       setEvaluation(evaluateHardware(DEFAULT_HARDWARE_INPUT));
       setCpuSuggestionVisible(false);
+      setRamSuggestionVisible(false);
+      setRamConfirmed(false);
     } finally {
       setIsScanning(false);
     }
@@ -86,9 +82,11 @@ export const App: React.FC = () => {
   const handleSaveHardware = (updated: UserHardwareInput) => {
     setHardwareInput(updated);
     setEvaluation(evaluateHardware(updated));
-    // El usuario revisó manualmente sus componentes: la sugerencia queda cubierta.
+    // El usuario revisó manualmente sus componentes: las sugerencias quedan cubiertas.
     setCpuSuggestionVisible(false);
     setCpuConfirmed(true);
+    setRamSuggestionVisible(false);
+    setRamConfirmed(true);
   };
 
   const handleConfirmCpuSuggestion = () => {
@@ -96,23 +94,27 @@ export const App: React.FC = () => {
     setCpuConfirmed(true);
   };
 
+  const handleConfirmRam = (gb: number) => {
+    const next: UserHardwareInput = { ...hardwareInput, ramGb: gb };
+    setHardwareInput(next);
+    setEvaluation(evaluateHardware(next));
+    setRamSuggestionVisible(false);
+    setRamConfirmed(true);
+  };
+
   const handleResetToDetected = () => {
     if (profile) {
-      const inference = profile.cpu.inference;
-      const canPrefillCpu = !!inference?.decisive && !!inference.suggestedModel;
-      const resetInput: UserHardwareInput = {
-        gpuModel: profile.gpu.model.value !== 'No detectada' ? profile.gpu.model.value : '',
-        gpuFormFactor: 'desktop',
-        cpuModel: canPrefillCpu ? (inference?.suggestedModel ?? '') : '',
-        cpuFormFactor: canPrefillCpu ? 'all' : 'desktop',
-        ramGb: profile.ram.estimatedGb.value || 8,
-        osName: profile.os.osName.value !== 'Desconocido' ? profile.os.osName.value : 'Windows 10 / 11 (64-bit)',
-        screenRefreshRateHz: profile.screen.estimatedRefreshRate.value || 60
-      };
+      const resetInput = buildHardwareInput(profile);
       setHardwareInput(resetInput);
       setEvaluation(evaluateHardware(resetInput));
+
+      const inference = profile.cpu.inference;
       setCpuConfirmed(false);
       setCpuSuggestionVisible(!!inference);
+
+      const ramUnconfirmed = isRamUnconfirmed(profile.ram);
+      setRamConfirmed(!ramUnconfirmed);
+      setRamSuggestionVisible(ramUnconfirmed);
     }
   };
 
@@ -215,6 +217,70 @@ export const App: React.FC = () => {
           </div>
         )}
 
+        {/* CPU ilegible: sin inferencia posible, se ofrece entrada manual */}
+        {profile && !profile.cpu.inference && !cpuConfirmed && !hardwareInput.cpuModel && !isScanning && !scanError && (
+          <div className="rounded-xl border border-slate-500/30 bg-slate-500/10 p-4 sm:p-5 space-y-3">
+            <div className="flex items-start gap-3">
+              <Cpu className="w-5 h-5 text-slate-300 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="font-display font-bold text-slate-200 text-sm uppercase tracking-wide">
+                  No se pudo inferir tu procesador
+                </p>
+                <p className="text-xs font-gamer text-slate-400">
+                  El navegador no expone el modelo de la CPU y la GPU detectada no permite
+                  inferirlo (p. ej. tarjeta dedicada sin gráfica integrada visible).
+                  Selecciónalo manualmente para completar la comparación.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setIsEditModalOpen(true)}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-slate-500/10 border border-slate-500/40 text-slate-300 text-xs font-display uppercase tracking-wider hover:bg-slate-500/20 transition-colors"
+            >
+              <Cpu className="w-3.5 h-3.5" />
+              Seleccionar CPU
+            </button>
+          </div>
+        )}
+
+        {/* RAM no legible: deviceMemory capado a 8 GB o API ausente */}
+        {profile && ramSuggestionVisible && !isScanning && !scanError && (
+          <div className="rounded-xl border border-violet-500/30 bg-violet-500/10 p-4 sm:p-5 space-y-3">
+            <div className="flex items-start gap-3">
+              <HardDrive className="w-5 h-5 text-violet-400 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="font-display font-bold text-violet-300 text-sm uppercase tracking-wide">
+                  Confirma la RAM de tu equipo
+                </p>
+                <p className="text-xs font-gamer text-slate-300">
+                  Por privacidad, el navegador no expone la RAM real:{' '}
+                  {profile.ram.isCappedByBrowser
+                    ? 'deviceMemory está limitado a 8 GB (tu equipo puede tener 16 GB o más).'
+                    : 'la API de memoria no está disponible en este navegador.'}
+                  {' '}Selecciona cuánta RAM tienes:
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {[8, 16, 32, 64].map((gb) => (
+                <button
+                  key={gb}
+                  onClick={() => handleConfirmRam(gb)}
+                  className="px-4 py-2 rounded-lg bg-violet-500/15 border border-violet-500/40 text-violet-200 text-xs font-display uppercase tracking-wider hover:bg-violet-500/25 transition-colors"
+                >
+                  {gb} GB
+                </button>
+              ))}
+              <button
+                onClick={() => setIsEditModalOpen(true)}
+                className="px-4 py-2 rounded-lg bg-slate-500/10 border border-slate-500/40 text-slate-300 text-xs font-display uppercase tracking-wider hover:bg-slate-500/20 transition-colors"
+              >
+                Otra cantidad
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* HUD Gamer Central Console */}
         {evaluation && (
           <VerdictBanner
@@ -223,6 +289,7 @@ export const App: React.FC = () => {
             onOpenEditModal={() => setIsEditModalOpen(true)}
             cpuInference={profile?.cpu.inference ?? null}
             cpuConfirmed={cpuConfirmed}
+            ramUnconfirmed={!!profile && !ramConfirmed && isRamUnconfirmed(profile.ram)}
           />
         )}
 

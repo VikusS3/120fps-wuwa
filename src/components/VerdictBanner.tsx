@@ -22,6 +22,8 @@ interface VerdictBannerProps {
   cpuInference?: CpuInference | null;
   /** El usuario confirmó o editó manualmente la CPU. */
   cpuConfirmed?: boolean;
+  /** La RAM real no es legible (deviceMemory capado o API ausente). */
+  ramUnconfirmed?: boolean;
 }
 
 export const VerdictBanner: React.FC<VerdictBannerProps> = ({
@@ -29,7 +31,8 @@ export const VerdictBanner: React.FC<VerdictBannerProps> = ({
   input,
   onOpenEditModal,
   cpuInference = null,
-  cpuConfirmed = false
+  cpuConfirmed = false,
+  ramUnconfirmed = false
 }) => {
   const [copied, setCopied] = useState(false);
 
@@ -168,10 +171,18 @@ export const VerdictBanner: React.FC<VerdictBannerProps> = ({
             {ramReq?.status !== 'confirmed_compatible' && <span className="text-xs font-gamer text-cyan-400">8GB</span>}
           </div>
           <p className="text-sm font-gamer font-bold text-white">
-            {input.ramGb} GB
+            {ramUnconfirmed
+              ? (input.ramGb > 0 ? `≥${input.ramGb} GB` : 'No expuesta')
+              : (input.ramGb > 0 ? `${input.ramGb} GB` : 'Sin especificar')}
           </p>
           <span className="text-[10px] font-gamer text-cyan-500/70 uppercase">
-            {input.ramGb >= 16 ? 'Óptima' : 'Mínima'}
+            {ramUnconfirmed
+              ? 'Sin confirmar'
+              : input.ramGb >= 16
+                ? 'Óptima'
+                : input.ramGb > 0
+                  ? 'Mínima'
+                  : 'Sin especificar'}
           </span>
         </button>
 

@@ -54,7 +54,8 @@ Aplicación web moderna, determinista y orientada a la privacidad para verificar
 │   │   ├── detection/           # Detección pasiva en navegador y normalizador de hardware
 │   │   │   ├── normalizer.ts    # Limpieza de cadenas ANGLE (paréntesis anidados (R)/(TM)) y matching con reglas
 │   │   │   ├── gpuDetector.ts   # Pipeline multi-candidato WebGL/WebGPU/detect-gpu y adaptadores virtuales
-│   │   │   ├── cpuInferencer.ts # Inferencia de familia de CPU desde la iGPU (decisiva / ambigua)
+│   │   │   ├── cpuInferencer.ts # Inferencia de familia de CPU desde la iGPU (multi-candidata, decisiva / ambigua)
+│   │   │   ├── prefill.ts       # Valores iniciales del formulario (sin adivinanzas de RAM, CPU solo si decisiva)
 │   │   │   ├── systemDetector.ts# Detección de OS, deviceMemory y hardwareConcurrency
 │   │   │   └── screenDetector.ts# Muestreo de tasa de refresco (Hz) y resolución
 │   │   └── evaluation/          # Motor determinista de evaluación de requisitos
@@ -74,7 +75,8 @@ Aplicación web moderna, determinista y orientada a la privacidad para verificar
 ├── tests/                       # Suite de pruebas automatizadas con Vitest
 │   ├── database.test.ts         # Pruebas de integridad referencial de fuentes y reglas
 │   ├── normalizer.test.ts       # Limpieza ANGLE anidada, alias (R)/(TM), inferencia e inferFormFactor
-│   ├── cpuInferencer.test.ts    # Reglas iGPU → CPU: decisividad y resolución en la base de datos
+│   ├── cpuInferencer.test.ts    # Reglas iGPU → CPU: multi-candidata, decisividad y nuevas iGPU (Arc/740M/840M)
+│   ├── prefill.test.ts          # Prefill del formulario: RAM sin adivinanzas y CPU solo si decisiva
 │   ├── gpuDetector.test.ts      # Helpers puros: software/virtual/opaco y selección de candidata
 │   └── evaluator.test.ts        # Veredictos, laptops vs desktop, CPU inferida con factor 'all'
 ├── docs/                        # Documentación técnica extendida
@@ -138,7 +140,7 @@ vercel
 
 ## 🧪 Pruebas Unitarias
 
-La suite incluye 55 pruebas automatizadas que cubren:
+La suite incluye 72 pruebas automatizadas que cubren:
 - Casos de GPU compatible y CPU compatible (`confirmed_compatible`).
 - Casos de GPU incompatible según la lista de Kuro Games (ej. GTX 1060).
 - Casos de CPU incompatible según los umbrales vigentes (ej. Ryzen 5 2600).
@@ -147,6 +149,9 @@ La suite incluye 55 pruebas automatizadas que cubren:
 - Detección de GPUs integradas frente a dedicadas.
 - Normalización de cadenas ANGLE con paréntesis anidados `(R)`/`(TM)` (causa raíz del fallo histórico de detección en Intel/AMD).
 - Inferencia de CPU desde iGPU: decisividad, sugerencias resolubles en la base y exclusiones (Vega discreta, GPU dedicada).
+- Inferencia multi-candidata: la iGPU se evalúa aunque gane la dedicada (Optimus), incluida la segunda GPU detectada.
+- Nuevas reglas iGPU verificadas: Intel Arc integrada → Core Ultra (decisiva), Radeon 740M → Phoenix, Radeon 840M/860M → Ryzen AI 300 (no decisivas), 610M y Arc discretas excluidas por ambigüedad.
+- Prefill compartido escaneo/reset: la RAM capada a 8 GB nunca se convierte en 16 (sin adivinanzas) y se marca `Sin confirmar`; la CPU solo se pre-rellena con inferencia decisiva.
 - CPU inferida con factor de forma `all` (etiqueta "Escritorio o Laptop", nunca "Escritorio").
 - Selección de la mejor candidata de GPU (descarta software/virtual, prioriza dedicada y whitelist).
 - Monitores estándar de 60 Hz (aviso informativo sin bloquear la compatibilidad del juego).

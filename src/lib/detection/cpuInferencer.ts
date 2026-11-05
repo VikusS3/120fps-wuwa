@@ -44,6 +44,27 @@ const IGPU_CPU_RULES: CpuInferenceRule[] = [
       'La iGPU detectada solo existe en los procesadores AMD Ryzen serie 6000 (Zen 3+), dentro del rango admitido por Kuro Games.'
   },
   {
+    // Radeon 740M: exclusiva de Phoenix (Zen 4): Ryzen 7000/8000 en versiones
+    // U (portátil) y G (escritorio, p. ej. 8500G). No decisiva porque las U no
+    // figuran en la whitelist mientras que la generación Zen 4 sí está admitida:
+    // se pide al usuario que elija su modelo exacto.
+    // (610M se omite deliberadamente: existe en Mendocino Zen 2 y en Dragon
+    // Range-H Zen 4, ambigüedad que impide concluir la generación.)
+    pattern: /\bradeon\s+740m\b/,
+    decisive: false,
+    family: 'AMD Ryzen 7000/8000 Phoenix (Zen 4, versiones U / G)',
+    notes:
+      'Tu iGPU indica un AMD Ryzen Zen 4 (Phoenix). Selecciona tu modelo exacto (U de portátil o G de escritorio) para completar la comparación.'
+  },
+  {
+    // Radeon 840M/860M: exclusivas de Krackan Point (Zen 5): Ryzen AI 300.
+    pattern: /\bradeon\s+(?:840m|860m)\b/,
+    decisive: false,
+    family: 'AMD Ryzen AI 300 Krackan (Zen 5)',
+    notes:
+      'Tu iGPU indica un AMD Ryzen AI 300 (Zen 5). Selecciona tu modelo exacto para completar la comparación.'
+  },
+  {
     // Vega integrada o "Radeon Graphics" genérico: abarca desde Ryzen 2000 hasta
     // Ryzen 5000 en versiones U y G, así que no permite concluir la generación.
     // Se excluyen las Vega discretas (RX Vega 56/64) mediante el ancla "10 | 3-9".
@@ -55,6 +76,16 @@ const IGPU_CPU_RULES: CpuInferenceRule[] = [
   },
 
   // ---------------- Intel ----------------
+  {
+    // iGPU Intel Arc (Meteor Lake / Lunar Lake / Arrow Lake): solo existe en
+    // Core Ultra. Las Arc discretas (A770/B580) no coinciden con el patrón.
+    pattern: /\barc\s+(?:graphics|1[34]0v)\b/,
+    decisive: true,
+    family: 'Intel Core Ultra (Meteor Lake / Lunar Lake / Arrow Lake)',
+    suggestedModel: 'Intel Core Ultra 5 125H',
+    notes:
+      'La iGPU detectada solo existe en procesadores Intel Core Ultra (equivalentes a 12ª generación o superior), dentro del rango admitido por Kuro Games.'
+  },
   {
     // UHD 730/770: exclusivas de escritorio 12ª-14ª generación.
     pattern: /\buhd\s+graphics\s+(?:730|770)\b/,
@@ -119,24 +150,57 @@ const IGPU_CPU_RULES: CpuInferenceRule[] = [
 ];
 
 /**
- * Infere la familia de CPU a partir de la GPU detectada.
- * Devuelve `null` cuando la GPU es dedicada (no aporta información de la CPU).
+ * Infiere la familia de CPU a partir de la GPU detectada.
+ *
+ * Se evalúan todas las fuentes disponibles en orden: la GPU elegida (mejor
+ * candidata), el resto de candidatas —priorizando las integradas— y la segunda
+ * GPU. Esto es esencial en portátiles Optimus: la dedicada gana la elección y,
+ * sin este barrido, la iGPU (única que informa de la CPU) se ignoraba.
+ *
+ * Devuelve `null` cuando ninguna fuente aporta información de la CPU
+ * (p. ej. escritorio con tarjeta dedicada sin iGPU expuesta).
  */
 export function inferCpuFromGpu(
-  gpu: Pick<DetectedGpuInfo, 'model' | 'rendererString'>
+  gpu: Pick<DetectedGpuInfo, 'model' | 'rendererString'> &
+    Partial<Pick<DetectedGpuInfo, 'candidates' | 'secondaryGpu'>>
 ): CpuInference | null {
-  const haystack = normalizeHardwareString(`${gpu.model.value} ${gpu.rendererString}`);
-  if (!haystack || haystack === 'no detectada') return null;
+  const sources: Array<{ text: string; label: string }> = [];
+  const seen = new Set<string>();
+  const add = (value: string | undefined, label: string) => {
+    const text = (value || '').trim();
+    const key = text.toLowerCase();
+    if (text && !seen.has(key)) {
+      seen.add(key);
+      sources.push({ text, label });
+    }
+  };
 
-  for (const rule of IGPU_CPU_RULES) {
-    if (rule.pattern.test(haystack)) {
-      return {
-        decisive: rule.decisive,
-        family: rule.family,
-        suggestedModel: rule.suggestedModel,
-        sourceGpu: gpu.rendererString || gpu.model.value,
-        notes: rule.notes
-      };
+  // 1. GPU elegida como cadena combinada (modelo + renderer crudo).
+  add(`${gpu.model.value} ${gpu.rendererString}`, gpu.rendererString || gpu.model.value);
+
+  // 2. Resto de candidatas, priorizando las iGPU (son las que informan de la CPU).
+  const rest = [...(gpu.candidates ?? [])].sort(
+    (a, b) => Number(b.isIntegrated) - Number(a.isIntegrated)
+  );
+  for (const candidate of rest) add(candidate.rawString, candidate.rawString);
+
+  // 3. Segunda GPU detectada (iGPU + dedicada en portátiles conmutables).
+  add(gpu.secondaryGpu, gpu.secondaryGpu ?? '');
+
+  for (const source of sources) {
+    const haystack = normalizeHardwareString(source.text);
+    if (!haystack || haystack === 'no detectada' || haystack === 'no disponible') continue;
+
+    for (const rule of IGPU_CPU_RULES) {
+      if (rule.pattern.test(haystack)) {
+        return {
+          decisive: rule.decisive,
+          family: rule.family,
+          suggestedModel: rule.suggestedModel,
+          sourceGpu: source.label,
+          notes: rule.notes
+        };
+      }
     }
   }
 
