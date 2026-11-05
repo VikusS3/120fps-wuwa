@@ -1,4 +1,4 @@
-import { DetectedOsInfo, DetectedCpuInfo, DetectedRamInfo } from './types';
+import { DetectedOsInfo, DetectedCpuInfo, DetectedRamInfo, CpuInference } from './types';
 
 export async function detectOs(): Promise<DetectedOsInfo> {
   let platform = 'Desconocido';
@@ -106,7 +106,7 @@ export function detectRam(): DetectedRamInfo {
   };
 }
 
-export function detectCpu(): DetectedCpuInfo {
+export function detectCpu(inference?: CpuInference | null): DetectedCpuInfo {
   let logicalCores = 0;
   let confidence: 'inferred' | 'unknown' = 'unknown';
 
@@ -115,6 +115,36 @@ export function detectCpu(): DetectedCpuInfo {
     if (logicalCores > 0) {
       confidence = 'inferred';
     }
+  }
+
+  // Inferencia de familia de CPU a partir de la iGPU (nunca es lectura exacta).
+  if (inference) {
+    return {
+      coresOrThreads: {
+        value: logicalCores,
+        confidence,
+        sourceApi: 'navigator.hardwareConcurrency',
+        isReliable: logicalCores > 0,
+        notes: logicalCores > 0
+          ? `${logicalCores} hilos lógicos reportados. Por razones de seguridad, las páginas web no pueden leer el modelo exacto de CPU.`
+          : 'API hardwareConcurrency bloqueada o no soportada.'
+      },
+      architecture: {
+        value: 'x86_64 / arm64',
+        confidence: 'inferred',
+        sourceApi: 'UserAgent / Navigator',
+        isReliable: false,
+        notes: 'Inferido de la plataforma del sistema.'
+      },
+      estimatedModel: {
+        value: inference.suggestedModel || inference.family,
+        confidence: 'inferred',
+        sourceApi: `Inferido desde la GPU (${inference.sourceGpu})`,
+        isReliable: false,
+        notes: inference.notes
+      },
+      inference
+    };
   }
 
   return {

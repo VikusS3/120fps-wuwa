@@ -219,4 +219,61 @@ describe('Motor de Evaluación de Compatibilidad (Wuthering Waves 120 FPS)', () 
     expect(cpuReq?.status).toBe('confirmed_incompatible');
     expect(cpuReq?.message).toContain('umbral de CPU');
   });
+
+  // ==========================================
+  // CPU inferida desde iGPU (cpuFormFactor: 'all')
+  // ==========================================
+  it('debe aceptar una CPU inferida con factor de forma "all" sin forzar "Escritorio"', () => {
+    const input: UserHardwareInput = {
+      gpuModel: 'NVIDIA GeForce RTX 4070',
+      gpuFormFactor: 'desktop',
+      cpuModel: 'AMD Ryzen 7 7840HS / 8845HS',
+      cpuFormFactor: 'all',
+      ramGb: 16,
+      osName: 'Windows 11 (64-bit)',
+      screenRefreshRateHz: 144
+    };
+
+    const result = evaluateHardware(input);
+    expect(result.verdict).toBe('compatible');
+
+    const cpuReq = result.requirements.find(r => r.id === 'cpu');
+    expect(cpuReq?.status).toBe('confirmed_compatible');
+    expect(cpuReq?.userValue).toContain('Escritorio o Laptop');
+    expect(cpuReq?.userValue).not.toContain('(Escritorio)');
+  });
+
+  it('debe completar la comparación con un Ryzen 5 5600X ausente de la base (inferencia)', () => {
+    const input: UserHardwareInput = {
+      gpuModel: 'NVIDIA GeForce RTX 3060',
+      gpuFormFactor: 'desktop',
+      cpuModel: 'AMD Ryzen 5 5600X',
+      cpuFormFactor: 'desktop',
+      ramGb: 16,
+      osName: 'Windows 11 (64-bit)',
+      screenRefreshRateHz: 120
+    };
+
+    const result = evaluateHardware(input);
+    expect(result.verdict).toBe('compatible');
+
+    const cpuReq = result.requirements.find(r => r.id === 'cpu');
+    expect(cpuReq?.status).toBe('confirmed_compatible');
+  });
+
+  it('debe mantener "cannot_determine" solo si la CPU inferida es ambigua y no confirmada', () => {
+    // Iris Xe es no decisiva: si el usuario deja la CPU vacía, no se puede concluir.
+    const input: UserHardwareInput = {
+      gpuModel: 'NVIDIA GeForce RTX 4070',
+      gpuFormFactor: 'desktop',
+      cpuModel: '',
+      cpuFormFactor: 'all',
+      ramGb: 16,
+      osName: 'Windows 11 (64-bit)',
+      screenRefreshRateHz: 144
+    };
+
+    const result = evaluateHardware(input);
+    expect(result.verdict).toBe('cannot_determine');
+  });
 });

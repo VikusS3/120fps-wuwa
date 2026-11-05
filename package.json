@@ -6,13 +6,15 @@
   "packageManager": "pnpm@11.24.0",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "postinstall": "node scripts/copy-gpu-benchmarks.mjs",
+    "build": "node scripts/copy-gpu-benchmarks.mjs && tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@pmndrs/detect-gpu": "^6.0.29",
     "clsx": "^2.1.1",
     "lucide-react": "^1.16.0",
     "react": "^18.3.1",

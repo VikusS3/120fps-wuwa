@@ -11,6 +11,13 @@ import {
 const PERFORMANCE_DISCLAIMER = 
   'Aviso técnico importante: El cumplimiento de la lista de compatibilidad oficial permite desbloquear el selector de 120 FPS en el menú de ajustes de Wuthering Waves, pero NO garantiza mantener 120 FPS estables en todas las situaciones de juego. La tasa de fotogramas real depende de la resolución seleccionada, configuración gráfica, DLSS/FSR, temperaturas térmicas, límites de consumo de energía, controladores gráficos actualizados y optimizaciones del parche.';
 
+/** Etiqueta legible del factor de forma; 'all' nunca se muestra como "Escritorio". */
+function formFactorLabel(formFactor: 'desktop' | 'laptop' | 'all'): string {
+  if (formFactor === 'laptop') return 'Laptop';
+  if (formFactor === 'desktop') return 'Escritorio';
+  return 'Escritorio o Laptop';
+}
+
 export function evaluateHardware(input: UserHardwareInput): EvaluationResult {
   const requirements: RequirementEvaluation[] = [];
   const sourcesMap = new Map<string, OfficialSource>();
@@ -64,7 +71,7 @@ export function evaluateHardware(input: UserHardwareInput): EvaluationResult {
           id: 'gpu',
           name: 'Tarjeta Gráfica (GPU)',
           status: 'confirmed_compatible',
-          userValue: `${gpuRule.model} (${input.gpuFormFactor === 'laptop' ? 'Laptop' : 'Escritorio'})`,
+          userValue: `${gpuRule.model} (${formFactorLabel(input.gpuFormFactor)})`,
           isMandatory: true,
           message: `Compatible. Verificada en la lista oficial para la opción de 120 FPS (${gpuRule.family}).`,
           officialSource: OFFICIAL_SOURCES[gpuRule.sourceId],
@@ -75,7 +82,7 @@ export function evaluateHardware(input: UserHardwareInput): EvaluationResult {
           id: 'gpu',
           name: 'Tarjeta Gráfica (GPU)',
           status: 'confirmed_incompatible',
-          userValue: `${gpuRule.model} (${input.gpuFormFactor === 'laptop' ? 'Laptop' : 'Escritorio'})`,
+          userValue: `${gpuRule.model} (${formFactorLabel(input.gpuFormFactor)})`,
           isMandatory: true,
           message: `Incompatible para 120 FPS. Este modelo no forma parte de la lista admitida de Kuro Games para la opción de 120 cuadros.`,
           officialSource: OFFICIAL_SOURCES[gpuRule.sourceId],
@@ -87,7 +94,7 @@ export function evaluateHardware(input: UserHardwareInput): EvaluationResult {
           id: 'gpu',
           name: 'Tarjeta Gráfica (GPU)',
           status: 'confirmed_incompatible',
-          userValue: `${gpuRule.model} (${input.gpuFormFactor})`,
+          userValue: `${gpuRule.model} (${formFactorLabel(input.gpuFormFactor)})`,
           isMandatory: true,
           message: `Incompatibilidad de factor de forma: La regla oficial para ${gpuRule.model} aplica exclusivamente a equipos de ${gpuRule.formFactor}.`,
           officialSource: OFFICIAL_SOURCES[gpuRule.sourceId]
@@ -138,7 +145,7 @@ export function evaluateHardware(input: UserHardwareInput): EvaluationResult {
           id: 'cpu',
           name: 'Procesador (CPU)',
           status: 'confirmed_compatible',
-          userValue: `${cpuRule.model} (${input.cpuFormFactor === 'laptop' ? 'Laptop' : 'Escritorio'})`,
+          userValue: `${cpuRule.model} (${formFactorLabel(input.cpuFormFactor)})`,
           isMandatory: true,
           message: `Compatible. Cumple con la gama de procesadores admitidos oficialmente para 120 FPS (${cpuRule.family}).`,
           officialSource: OFFICIAL_SOURCES[cpuRule.sourceId],
@@ -149,7 +156,7 @@ export function evaluateHardware(input: UserHardwareInput): EvaluationResult {
           id: 'cpu',
           name: 'Procesador (CPU)',
           status: 'confirmed_incompatible',
-          userValue: `${cpuRule.model} (${input.cpuFormFactor === 'laptop' ? 'Laptop' : 'Escritorio'})`,
+          userValue: `${cpuRule.model} (${formFactorLabel(input.cpuFormFactor)})`,
           isMandatory: true,
           message: `Incompatible según el historial de requisitos de Kuro Games. Este procesador se sitúa por debajo del umbral de CPU para el whitelist de 120 FPS.`,
           officialSource: OFFICIAL_SOURCES[cpuRule.sourceId],
@@ -160,7 +167,7 @@ export function evaluateHardware(input: UserHardwareInput): EvaluationResult {
           id: 'cpu',
           name: 'Procesador (CPU)',
           status: 'confirmed_incompatible',
-          userValue: `${cpuRule.model} (${input.cpuFormFactor})`,
+          userValue: `${cpuRule.model} (${formFactorLabel(input.cpuFormFactor)})`,
           isMandatory: true,
           message: `Incompatibilidad de factor de forma: La regla para ${cpuRule.model} aplica a equipos de ${cpuRule.formFactor}.`,
           officialSource: OFFICIAL_SOURCES[cpuRule.sourceId]
@@ -351,8 +358,8 @@ export function formatReportAsPlainText(result: EvaluationResult, input: UserHar
   lines.push(`Detalle: ${result.verdictDescription}`);
   lines.push('');
   lines.push('---------------- ESPECIFICACIONES EVALUADAS ----------------');
-  lines.push(`GPU: ${input.gpuModel || 'No especificada'} (${input.gpuFormFactor})`);
-  lines.push(`CPU: ${input.cpuModel || 'No especificado'} (${input.cpuFormFactor})`);
+  lines.push(`GPU: ${input.gpuModel || 'No especificada'} (${formFactorLabel(input.gpuFormFactor)})`);
+  lines.push(`CPU: ${input.cpuModel || 'No especificado'} (${formFactorLabel(input.cpuFormFactor)})`);
   lines.push(`RAM: ${input.ramGb} GB`);
   lines.push(`SO: ${input.osName}`);
   lines.push(`Pantalla: ${input.screenRefreshRateHz} Hz`);

@@ -91,6 +91,50 @@ export const InspectionStatus: React.FC<InspectionStatusProps> = ({ profile, isS
             </p>
           </div>
 
+          {profile.cpu.inference && (
+            <div className="p-2.5 rounded-lg bg-slate-950/60 border border-slate-800/80 space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400 font-mono text-[11px]">CPU inferida desde iGPU:</span>
+                <span className={`font-semibold ${profile.cpu.inference.decisive ? 'text-emerald-300' : 'text-amber-300'}`}>
+                  {profile.cpu.inference.decisive ? 'Rango cerrado' : 'Ambigua'}
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-500">
+                {profile.cpu.inference.family} — a partir de{' '}
+                <code className="text-slate-400">{profile.cpu.inference.sourceGpu}</code>. Inferencia, no lectura exacta.
+              </p>
+            </div>
+          )}
+
+          {profile.gpu.secondaryGpu && (
+            <div className="p-2.5 rounded-lg bg-slate-950/60 border border-slate-800/80 space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400 font-mono text-[11px]">Segunda GPU detectada:</span>
+                <span className="font-semibold text-sky-300">{profile.gpu.secondaryGpu}</span>
+              </div>
+              <p className="text-[11px] text-slate-500">
+                Configuración híbrida (iGPU + dedicada). El juego utiliza la gráfica dedicada.
+              </p>
+            </div>
+          )}
+
+          {profile.gpu.candidates.length > 1 && (
+            <div className="p-2.5 rounded-lg bg-slate-950/60 border border-slate-800/80 space-y-1 md:col-span-2">
+              <span className="text-slate-400 font-mono text-[11px]">Cadenas observadas (todas las APIs):</span>
+              <ul className="mt-1 space-y-0.5">
+                {profile.gpu.candidates.map((candidate) => (
+                  <li key={`${candidate.sourceApi}-${candidate.rawString}`} className="text-[11px] text-slate-500 flex items-center gap-2">
+                    <span className="font-mono text-cyan-500/80 w-16 shrink-0">{candidate.sourceApi}</span>
+                    <code className="text-slate-400 truncate">{candidate.rawString}</code>
+                    {candidate.matchedRuleId && (
+                      <span className="text-emerald-400/80 shrink-0">✓ whitelist</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           <div className="p-2.5 rounded-lg bg-slate-950/60 border border-slate-800/80 space-y-1">
             <div className="flex items-center justify-between">
               <span className="text-slate-400 font-mono text-[11px]">Muestreo de Pantalla (RAF):</span>

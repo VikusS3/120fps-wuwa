@@ -14,7 +14,8 @@ Aplicación web moderna, determinista y orientada a la privacidad para verificar
 ## 🎯 Características Principales
 
 1. **Inspección Automática No Invasiva:**
-   - Detecta la GPU mediante WebGL (`WEBGL_debug_renderer_info`) o WebGPU.
+   - Detecta la GPU mediante WebGL (`WEBGL_debug_renderer_info`), WebGPU (adaptador de alto rendimiento) y la clasifica con [@pmndrs/detect-gpu](https://github.com/pmndrs/detect-gpu) (benchmarks autoalojados, sin CDNs de terceros).
+   - Inferencia de la familia de CPU a partir de la gráfica integrada (iGPU), siempre etiquetada como *inferida* y confirmada por el usuario antes de completar la comparación.
    - Detecta el sistema operativo (`navigator.userAgentData`).
    - Mide de forma pasiva la tasa de refresco del monitor (Hz) con `requestAnimationFrame`.
    - Clasifica con honestidad cada dato como *Exacto*, *Aproximado*, *Inferido* o *Desconocido*.
@@ -51,8 +52,9 @@ Aplicación web moderna, determinista y orientada a la privacidad para verificar
 │   │       └── cpuDatabase.ts   # Catálogo verificado de CPUs (Intel 12ª-14ª/Ultra, Ryzen 5000-9000)
 │   ├── lib/
 │   │   ├── detection/           # Detección pasiva en navegador y normalizador de hardware
-│   │   │   ├── normalizer.ts    # Limpieza de cadenas ANGLE, DirectX y emparejamiento con reglas
-│   │   │   ├── gpuDetector.ts   # Detección WebGL/WebGPU y adaptadores virtuales
+│   │   │   ├── normalizer.ts    # Limpieza de cadenas ANGLE (paréntesis anidados (R)/(TM)) y matching con reglas
+│   │   │   ├── gpuDetector.ts   # Pipeline multi-candidato WebGL/WebGPU/detect-gpu y adaptadores virtuales
+│   │   │   ├── cpuInferencer.ts # Inferencia de familia de CPU desde la iGPU (decisiva / ambigua)
 │   │   │   ├── systemDetector.ts# Detección de OS, deviceMemory y hardwareConcurrency
 │   │   │   └── screenDetector.ts# Muestreo de tasa de refresco (Hz) y resolución
 │   │   └── evaluation/          # Motor determinista de evaluación de requisitos
@@ -63,14 +65,18 @@ Aplicación web moderna, determinista y orientada a la privacidad para verificar
 │   │   ├── VerdictBanner.tsx    # Veredicto principal, aviso de rendimiento y copia de reporte
 │   │   ├── HardwareCard.tsx     # Tarjeta individual por componente con badges de certeza
 │   │   ├── ManualEditModal.tsx  # Modal de selección y corrección manual con guía de Windows
-│   │   ├── InspectionStatus.tsx # Panel de telemetría y APIs web utilizadas
+│   │   ├── InspectionStatus.tsx # Panel de transparencia: APIs leídas, inferencias y candidatas de GPU
 │   │   └── SourcesSection.tsx   # Desglose de fuentes oficiales consultadas
 │   ├── App.tsx                  # Orquestador principal y flujo en 3 fases
 │   └── main.tsx                 # Punto de entrada de React
+├── scripts/
+│   └── copy-gpu-benchmarks.mjs  # Autoaloja los benchmarks d-*.json de @pmndrs/detect-gpu en public/
 ├── tests/                       # Suite de pruebas automatizadas con Vitest
 │   ├── database.test.ts         # Pruebas de integridad referencial de fuentes y reglas
-│   ├── normalizer.test.ts       # Pruebas de limpieza y matching de cadenas de hardware
-│   └── evaluator.test.ts        # Pruebas de veredictos, casos límite y laptops vs desktop
+│   ├── normalizer.test.ts       # Limpieza ANGLE anidada, alias (R)/(TM), inferencia e inferFormFactor
+│   ├── cpuInferencer.test.ts    # Reglas iGPU → CPU: decisividad y resolución en la base de datos
+│   ├── gpuDetector.test.ts      # Helpers puros: software/virtual/opaco y selección de candidata
+│   └── evaluator.test.ts        # Veredictos, laptops vs desktop, CPU inferida con factor 'all'
 ├── docs/                        # Documentación técnica extendida
 │   ├── investigacion_fuentes.md # Metodología y recopilación de notas de Kuro Games
 │   └── limitaciones_tecnicas.md # Límites del sandbox web y consideraciones de seguridad
@@ -132,15 +138,18 @@ vercel
 
 ## 🧪 Pruebas Unitarias
 
-La suite incluye 22 pruebas automatizadas que cubren:
+La suite incluye 55 pruebas automatizadas que cubren:
 - Casos de GPU compatible y CPU compatible (`confirmed_compatible`).
 - Casos de GPU incompatible según la lista de Kuro Games (ej. GTX 1060).
 - Casos de CPU incompatible según los umbrales vigentes (ej. Ryzen 5 2600).
 - Manejo de componentes desconocidos (`cannot_determine`).
-- Detección de variantes de Laptop frente a Desktop.
+- Detección de variantes de Laptop frente a Desktop (sin falsos positivos por "13th Gen").
 - Detección de GPUs integradas frente a dedicadas.
+- Normalización de cadenas ANGLE con paréntesis anidados `(R)`/`(TM)` (causa raíz del fallo histórico de detección en Intel/AMD).
+- Inferencia de CPU desde iGPU: decisividad, sugerencias resolubles en la base y exclusiones (Vega discreta, GPU dedicada).
+- CPU inferida con factor de forma `all` (etiqueta "Escritorio o Laptop", nunca "Escritorio").
+- Selección de la mejor candidata de GPU (descarta software/virtual, prioriza dedicada y whitelist).
 - Monitores estándar de 60 Hz (aviso informativo sin bloquear la compatibilidad del juego).
-- Normalización de cadenas ANGLE de DirectX devueltas por WebGL.
 - Integridad referencial de todas las reglas frente al catálogo de fuentes oficiales.
 
 Para ejecutar los tests:

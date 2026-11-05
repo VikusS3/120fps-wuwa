@@ -2,7 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { 
   normalizeHardwareString, 
   matchGpuRule, 
-  matchCpuRule 
+  matchCpuRule,
+  inferFormFactor
 } from '../src/lib/detection/normalizer';
 
 describe('Normalizador y Coincidencia de Hardware', () => {
@@ -62,5 +63,81 @@ describe('Normalizador y Coincidencia de Hardware', () => {
     expect(normalizeHardwareString('')).toBe('');
     expect(matchGpuRule('')).toBeNull();
     expect(matchCpuRule('')).toBeNull();
+  });
+
+  // ==========================================
+  // Paréntesis anidados (R)/(TM) — causa raíz del fallo histórico
+  // ==========================================
+  it('debe desenvolver ANGLE con paréntesis anidados (R) sin corromper la cadena', () => {
+    const raw = 'ANGLE (Intel, Intel(R) UHD Graphics 630 Direct3D11 vs_5_0 ps_5_0), D3D11';
+    const clean = normalizeHardwareString(raw);
+    expect(clean).toContain('uhd graphics 630');
+    expect(clean).not.toContain('(r)');
+    expect(clean.split(' ')).not.toContain('r');
+  });
+
+  it('debe emparejar la iGPU Intel UHD 630 expuesta por WebGL con ANGLE anidado', () => {
+    const raw = 'ANGLE (Intel, Intel(R) UHD Graphics 630 Direct3D11 vs_5_0 ps_5_0), D3D11';
+    const matched = matchGpuRule(raw);
+    expect(matched).not.toBeNull();
+    expect(matched?.id).toBe('gpu-integrated-generic');
+    expect(matched?.isCompatible120Fps).toBe(false);
+  });
+
+  it('debe emparejar AMD Radeon (TM) Graphics con la regla de iGPU AMD', () => {
+    const matched = matchGpuRule('AMD Radeon (TM) Graphics');
+    expect(matched).not.toBeNull();
+    expect(matched?.id).toBe('gpu-amd-integrated-generic');
+  });
+
+  it('debe emparejar Radeon (TM) RX 580 con la regla de RX 580', () => {
+    const matched = matchGpuRule('AMD Radeon (TM) RX 580 Series Graphics');
+    expect(matched).not.toBeNull();
+    expect(matched?.model).toBe('Radeon RX 580');
+    expect(matched?.isCompatible120Fps).toBe(false);
+  });
+
+  it('debe normalizar por igual los alias de la base de datos (R)/(TM)', () => {
+    // El alias de la BD contiene "(tm)" explícitamente: debe compararse limpio.
+    const matched = matchGpuRule('Radeon(TM) Graphics');
+    expect(matched).not.toBeNull();
+    expect(matched?.id).toBe('gpu-amd-integrated-generic');
+  });
+
+  it('debe eliminar corchetes de nombres de codificación ([UHD Graphics 630])', () => {
+    const clean = normalizeHardwareString('Intel CometLake-S GT2 [UHD Graphics 630]');
+    expect(clean).toBe('intel cometlake-s gt2 uhd graphics 630');
+  });
+
+  // ==========================================
+  // Inferencia de CPU para modelos ausentes de la base
+  // ==========================================
+  it('debe inferir compatibilidad para Ryzen 5000 de escritorio ausente de la base (5600X)', () => {
+    const matched = matchCpuRule('AMD Ryzen 5 5600X 6-Core Processor');
+    expect(matched).not.toBeNull();
+    expect(matched?.isCompatible120Fps).toBe(true);
+    expect(matched?.status).toBe('confirmed');
+  });
+
+  it('debe inferir compatibilidad para Ryzen 7000 moderno ausente de la base (7600)', () => {
+    const matched = matchCpuRule('AMD Ryzen 5 7600');
+    expect(matched).not.toBeNull();
+    expect(matched?.isCompatible120Fps).toBe(true);
+  });
+
+  // ==========================================
+  // inferFormFactor — sin falsos positivos por "13th"
+  // ==========================================
+  it('inferFormFactor debe detectar sufijos reales de portátil', () => {
+    expect(inferFormFactor('intel core i7 8250u')).toBe('laptop');
+    expect(inferFormFactor('amd ryzen 7 7840hs')).toBe('laptop');
+    expect(inferFormFactor('intel core i7 13700hx')).toBe('laptop');
+    expect(inferFormFactor('intel core i5 1135g7')).toBe('laptop');
+  });
+
+  it('inferFormFactor no debe confundir "13th Gen" con portátil', () => {
+    expect(inferFormFactor('13th gen intel core i7 13700k')).toBe('desktop');
+    expect(inferFormFactor('intel core i5 12400')).toBe('desktop');
+    expect(inferFormFactor('amd ryzen 7 5800x')).toBe('desktop');
   });
 });

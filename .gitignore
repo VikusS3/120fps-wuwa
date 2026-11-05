@@ -14,6 +14,9 @@ dist-ssr
 *.local
 .pnpm-store
 
+# Generado por scripts/copy-gpu-benchmarks.mjs (postinstall / build)
+public/gpu-benchmarks/
+
 # Editor & OS
 .vscode/*
 !.vscode/extensions.json

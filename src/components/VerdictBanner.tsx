@@ -12,14 +12,25 @@ import {
 } from 'lucide-react';
 import { EvaluationResult, UserHardwareInput } from '../lib/evaluation/types';
 import { formatReportAsPlainText } from '../lib/evaluation/evaluator';
+import { CpuInference } from '../lib/detection/types';
 
 interface VerdictBannerProps {
   result: EvaluationResult;
   input: UserHardwareInput;
   onOpenEditModal: () => void;
+  /** Inferencia de CPU desde la iGPU (null si no hubo inferencia posible). */
+  cpuInference?: CpuInference | null;
+  /** El usuario confirmó o editó manualmente la CPU. */
+  cpuConfirmed?: boolean;
 }
 
-export const VerdictBanner: React.FC<VerdictBannerProps> = ({ result, input, onOpenEditModal }) => {
+export const VerdictBanner: React.FC<VerdictBannerProps> = ({
+  result,
+  input,
+  onOpenEditModal,
+  cpuInference = null,
+  cpuConfirmed = false
+}) => {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
@@ -127,8 +138,19 @@ export const VerdictBanner: React.FC<VerdictBannerProps> = ({ result, input, onO
             {input.cpuModel ? input.cpuModel.replace(/Intel Core |AMD /g, '') : 'Elegir CPU'}
           </p>
           <span className="text-[10px] font-gamer text-cyan-500/70 uppercase">
-            {input.cpuFormFactor === 'laptop' ? 'Laptop' : 'Escritorio'}
+            {input.cpuFormFactor === 'laptop'
+              ? 'Laptop'
+              : input.cpuFormFactor === 'desktop'
+                ? 'Escritorio'
+                : cpuConfirmed
+                  ? 'Confirmado'
+                  : 'Inferido'}
           </span>
+          {!cpuConfirmed && cpuInference && (
+            <span className="block text-[9px] font-gamer text-amber-400/80 uppercase mt-0.5">
+              Sin confirmar
+            </span>
+          )}
         </button>
 
         {/* Slot RAM */}
